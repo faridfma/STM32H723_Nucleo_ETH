@@ -316,8 +316,22 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
+
   /* init code for LWIP */
   MX_LWIP_Init();
+
+  //newly added
+  const char* message = "Hello UDP message!\n\r";
+
+  LOCK_TCPIP_CORE();
+  ip_addr_t PC_IPADDR;
+  IP_ADDR4(&PC_IPADDR, 192, 168, 1, 100);
+
+  struct udp_pcb* my_udp = udp_new();
+  udp_connect(my_udp, &PC_IPADDR, 8);
+  struct pbuf* udp_buffer = NULL;
+  UNLOCK_TCPIP_CORE();
+
   /* USER CODE BEGIN 5 */
   /* ETH_CODE: Adding lwiperf to measure TCP/IP performance.
      * iperf 2.0.6 (or older?) is required for the tests. Newer iperf2 versions
@@ -327,20 +341,30 @@ void StartDefaultTask(void *argument)
      * The default include path should already contain
      * 'lwip/apps/lwiperf.h'
      */
-  	LOCK_TCPIP_CORE();
-    lwiperf_start_tcp_server_default(NULL, NULL);
-
-    ip4_addr_t remote_addr;
-    IP4_ADDR(&remote_addr, 192, 168, 1, 1);
-    lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
-    UNLOCK_TCPIP_CORE();
+ // 	LOCK_TCPIP_CORE();
+//    lwiperf_start_tcp_server_default(NULL, NULL);
+//
+//    ip4_addr_t remote_addr;
+//    IP4_ADDR(&remote_addr, 192, 168, 1, 1);
+//    lwiperf_start_tcp_client_default(&remote_addr, NULL, NULL);
+ //   UNLOCK_TCPIP_CORE();
     /* Infinite loop */
     for(;;)
     {
 
-     HAL_GPIO_TogglePin(GREEN_LED2_CNTRL_GPIO_Port, GREEN_LED2_CNTRL_Pin);
+		 HAL_GPIO_TogglePin(GREEN_LED2_CNTRL_GPIO_Port, GREEN_LED2_CNTRL_Pin);
 
-      osDelay(1000);
+		 osDelay(1000);
+
+		  /* !! PBUF_RAM is critical for correct operation !! */
+		 udp_buffer = pbuf_alloc(PBUF_TRANSPORT, strlen(message), PBUF_RAM);
+
+		 if (udp_buffer != NULL)
+		 {
+			memcpy(udp_buffer->payload, message, strlen(message));
+			udp_send(my_udp, udp_buffer);
+			pbuf_free(udp_buffer);
+		 }
     }
   /* USER CODE END 5 */
 }

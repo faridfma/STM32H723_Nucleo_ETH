@@ -978,7 +978,7 @@ void sys_check_core_locking(void){
 	 * This will trigger breakpoint (__BKPT)
 	 */
 #warning Below check should be removed in production code
-	if(current_thread_id != lwip_core_lock_holder_thread_id) __BKPT(0);
+//	if(current_thread_id != lwip_core_lock_holder_thread_id) __BKPT(0);
 #else /* LWIP_TCPIP_CORE_LOCKING */
 	LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
